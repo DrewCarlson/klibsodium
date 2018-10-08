@@ -6,6 +6,19 @@ import org.libsodium.jni.NaCl
 
 @ExperimentalUnsignedTypes
 actual object Sodium {
+  actual val cryptoKdfKeybytes: Int = TODO()
+  actual val cryptoShorthashBytes: Int = JNISodium.crypto_shorthash_bytes()
+  actual val cryptoGenerichashBytes: Int = JNISodium.crypto_generichash_bytes()
+  actual val cryptoBoxSealbytes: Int = JNISodium.crypto_box_sealbytes()
+  actual val cryptoBoxPublickeyBytes: Int = JNISodium.crypto_box_publickeybytes()
+  actual val cryptoBoxSecretkeyBytes: Int = JNISodium.crypto_box_secretkeybytes()
+  actual val cryptoBoxSeedbytes: Int = JNISodium.crypto_box_seedbytes()
+  actual val cryptoPwhashStrbytes: Int = JNISodium.crypto_pwhash_strbytes()
+  actual val cryptoPwhashOpslimitSensitive: Int = JNISodium.crypto_pwhash_opslimit_sensitive()
+  actual val cryptoPwhashMemlimitSensitive: Int = JNISodium.crypto_pwhash_memlimit_sensitive()
+  actual val cryptoPwhashOpslimitInteractive: Int = JNISodium.crypto_pwhash_opslimit_interactive()
+  actual val cryptoPwhashMemlimitInteractive: Int = JNISodium.crypto_pwhash_memlimit_interactive()
+  actual val cryptoPwhashAlgDefault: Int = JNISodium.crypto_pwhash_alg_default()
 
   actual fun init(): Boolean {
     NaCl.sodium()

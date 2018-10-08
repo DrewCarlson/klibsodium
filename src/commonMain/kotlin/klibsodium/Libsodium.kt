@@ -5,6 +5,19 @@ typealias BoxKeyPair = Pair<UByteArray, UByteArray>
 
 @ExperimentalUnsignedTypes
 expect object Sodium {
+  val cryptoKdfKeybytes: Int
+  val cryptoShorthashBytes: Int
+  val cryptoGenerichashBytes: Int
+  val cryptoBoxSealbytes: Int
+  val cryptoBoxPublickeyBytes: Int
+  val cryptoBoxSecretkeyBytes: Int
+  val cryptoBoxSeedbytes: Int
+  val cryptoPwhashStrbytes: Int
+  val cryptoPwhashOpslimitSensitive: Int
+  val cryptoPwhashMemlimitSensitive: Int
+  val cryptoPwhashOpslimitInteractive: Int
+  val cryptoPwhashMemlimitInteractive: Int
+  val cryptoPwhashAlgDefault: Int
 
   fun init(): Boolean
 
@@ -28,7 +41,7 @@ expect object Sodium {
 
   fun cryptoPwhashStrNeedsRehash(
     hashedPassword: ByteArray,
-    opslimit: ULong,// = crypto_pwhash_OPSLIMIT_SENSITIVE.toULong(),
+    opslimit: ULong,//TODO: Why doesn't this compile = crypto_pwhash_OPSLIMIT_SENSITIVE.toULong(),
     memlimit: ULong// = crypto_pwhash_MEMLIMIT_SENSITIVE.toULong()
   ): Boolean
 

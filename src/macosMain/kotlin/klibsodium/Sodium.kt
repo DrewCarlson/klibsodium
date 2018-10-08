@@ -5,7 +5,21 @@ import kotlinx.cinterop.pin
 import kotlinx.cinterop.usePinned
 import libsodium.*
 
+@ExperimentalUnsignedTypes
 actual object Sodium {
+  actual val cryptoKdfKeybytes = crypto_kdf_KEYBYTES
+  actual val cryptoShorthashBytes = crypto_shorthash_BYTES.toInt()
+  actual val cryptoGenerichashBytes = crypto_generichash_BYTES.toInt()
+  actual val cryptoBoxSealbytes = crypto_box_SEALBYTES.toInt()
+  actual val cryptoBoxPublickeyBytes = crypto_box_PUBLICKEYBYTES.toInt()
+  actual val cryptoBoxSecretkeyBytes = crypto_box_SECRETKEYBYTES.toInt()
+  actual val cryptoBoxSeedbytes = crypto_box_SEEDBYTES.toInt()
+  actual val cryptoPwhashStrbytes = crypto_pwhash_STRBYTES.toInt()
+  actual val cryptoPwhashOpslimitSensitive = crypto_pwhash_OPSLIMIT_SENSITIVE.toInt()
+  actual val cryptoPwhashMemlimitSensitive = crypto_pwhash_MEMLIMIT_SENSITIVE.toInt()
+  actual val cryptoPwhashOpslimitInteractive = crypto_pwhash_OPSLIMIT_INTERACTIVE.toInt()
+  actual val cryptoPwhashMemlimitInteractive = crypto_pwhash_MEMLIMIT_INTERACTIVE.toInt()
+  actual val cryptoPwhashAlgDefault = crypto_pwhash_ALG_DEFAULT
 
   actual fun init(): Boolean {
     return sodium_init() == 0
@@ -95,7 +109,7 @@ actual object Sodium {
     if (res != 0) {
       error("Password hash failed")
     }
-    return hashedPassword.get()
+    return hashedPassword.get().run { copyOf(indexOf(0.toByte())) }
   }
 
   actual fun cryptoPwhashStrVerify(hashedPassword: ByteArray, password: String?): Boolean {
@@ -110,8 +124,8 @@ actual object Sodium {
 
   actual fun cryptoPwhashStrNeedsRehash(
     hashedPassword: ByteArray,
-    opslimit: ULong,// = crypto_pwhash_OPSLIMIT_SENSITIVE.toULong(),
-    memlimit: ULong// = crypto_pwhash_MEMLIMIT_SENSITIVE.toULong()
+    opslimit: ULong,
+    memlimit: ULong
   ): Boolean {
     return hashedPassword.usePinned { pinned ->
       crypto_pwhash_str_needs_rehash(
@@ -122,10 +136,7 @@ actual object Sodium {
     } != 0
   }
 
-  actual fun cryptoBoxKeypair(
-    pkLen: Int,// = crypto_box_PUBLICKEYBYTES.toInt(),
-    skLen: Int// = crypto_box_SECRETKEYBYTES.toInt()
-  ): BoxKeyPair {
+  actual fun cryptoBoxKeypair(pkLen: Int, skLen: Int): BoxKeyPair {
     val rPK = UByteArray(pkLen).pin()
     val rSK = UByteArray(skLen).pin()
     val res = crypto_box_keypair(rPK.addressOf(0), rSK.addressOf(0))

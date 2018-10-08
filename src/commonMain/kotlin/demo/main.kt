@@ -120,7 +120,7 @@ fun main(args: Array<String>) {
     val password = "test1234"
     val hashedPassword = Sodium.cryptoPwhashStr(password)
     println("Password: $password")
-    println("Hashed Password: ${hashedPassword.contentToString()}")
+    println("Hashed Password: ${hashedPassword.asString()}")
     println("Verify: ${Sodium.cryptoPwhashStrVerify(hashedPassword, password)}")
     */
 }
