@@ -1,82 +1,140 @@
 plugins {
-    id 'kotlin-multiplatform' version '1.3.0-rc-146'
-    id 'de.undercouch.download' version '3.4.3'
+  id 'kotlin-multiplatform' version '1.3.0-rc-146'
+  id 'de.undercouch.download' version '3.4.3'
 }
 
 repositories {
-    maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    mavenCentral()
+  maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+  mavenCentral()
 }
 
 def libDir = file("lib")
 kotlin {
-    targets {
-        fromPreset(presets.mingwX64, 'mingw')
-        configure([mingw]) {
-            compilations.main {
-                outputKinds('EXECUTABLE')
-                entryPoint = 'demo.main'
-                def sodiumDir = file("$libDir/libsodium-mingw/libsodium-win64")
-                extraOpts "-linker-options", "-L$sodiumDir/lib"
-                cinterops {
-                    libsodium {
-                        packageName 'libsodium'
-                        compilerOpts "-I$sodiumDir/include"
-                        includeDirs "-I$sodiumDir/include"/* , "-I$sodiumDir/include/sodium"*/
-                    }
-                }
-            }
+  targets {
+    fromPreset(presets.jvm, 'jvm')
+    fromPreset(presets.macosX64, 'macos')
+    fromPreset(presets.mingwX64, 'mingw')
+    configure([mingw]) {
+      compilations.main {
+        outputKinds('EXECUTABLE')
+        entryPoint = 'demo.main'
+        def sodiumDir = file("$libDir/libsodium-mingw/libsodium-win64")
+        extraOpts "-linker-options", "-L$sodiumDir/lib"
+        cinterops {
+          libsodium {
+            packageName 'libsodium'
+            compilerOpts "-I$sodiumDir/include"
+            includeDirs "$sodiumDir/include"
+          }
         }
+      }
     }
-    sourceSets {
-        mingwMain {
+    configure([macos]) {
+      compilations.main {
+        outputKinds('EXECUTABLE')
+        entryPoint = 'demo.main'
+        def sodiumDir = file("$libDir/libsodium-stable/libsodium-osx")
+        extraOpts "-linker-options", "-L$sodiumDir/lib"
+        cinterops {
+          libsodium {
+            packageName 'libsodium'
+            compilerOpts "-I$sodiumDir/include"
+            includeDirs "$sodiumDir/include"
+          }
         }
-        mingwTest {
-        }
+      }
     }
+  }
+  sourceSets {
+    commonMain {
+      dependencies {
+        implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+      }
+    }
+    commonTest {
+      dependencies {
+        implementation 'org.jetbrains.kotlin:kotlin-test-common'
+        implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
+      }
+    }
+    jvmMain {
+      dependencies {
+        implementation 'com.github.joshjdevl.libsodiumjni:libsodium-jni:2.0.1'
+      }
+    }
+    jvmTest {
+      dependencies {
+        implementation 'org.jetbrains.kotlin:kotlin-test'
+        implementation 'org.jetbrains.kotlin:kotlin-test-junit'
+      }
+    }
+  }
 }
 
+/* Native: Macos */
+
 task downloadLibsodium(type: Download) {
-    onlyIf { !file('lib/libsodium-1.0.16').exists() }
-    acceptAnyCertificate true
-    quiet false
-    overwrite false
-    onlyIfModified true
-    src 'https://download.libsodium.org/libsodium/releases/libsodium-1.0.16.tar.gz'
-    dest new File(buildDir, 'libsodium-1.0.16.tar.gz')
+  onlyIf { !file('lib/libsodium-stable').exists() }
+  acceptAnyCertificate true
+  quiet false
+  overwrite false
+  onlyIfModified true
+  src 'https://download.libsodium.org/libsodium/releases/LATEST.tar.gz'
+  dest new File(buildDir, 'libsodium-latest.tar.gz')
 }
 
 task downloadAndExtractLibsodium(dependsOn: downloadLibsodium, type: Copy) {
-    onlyIf { !file('lib/libsodium-1.0.16').exists() }
-    from tarTree(downloadLibsodium.dest)
-    into file('lib')
+  onlyIf { !file('lib/libsodium-stable').exists() }
+  from tarTree(downloadLibsodium.dest)
+  into file('lib')
 }
 
+task buildLibsodium(dependsOn: downloadAndExtractLibsodium, type: Exec) {
+  onlyIf { !file('lib/libsodium-stable/libsodium-osx').exists() }
+  workingDir "$projectDir/lib/libsodium-stable"
+  commandLine "./dist-build/osx.sh"
+}
+
+cinteropLibsodiumMacos.dependsOn buildLibsodium
+
+task runProgramMacos {
+  def buildType = 'debug' // Change to 'debug' to run application with debug symbols.
+  dependsOn "link${buildType.capitalize()}ExecutableMacos"
+  doLast {
+    def programFile = kotlin.targets.macos.compilations.main.getBinary('EXECUTABLE', buildType)
+    exec {
+      executable programFile
+    }
+  }
+}
+
+/* Native: Windows */
+
 task downloadLibsodiumMingw(type: Download) {
-    onlyIf { !file('lib/libsodium-mingw').exists() }
-    acceptAnyCertificate true
-    quiet false
-    overwrite false
-    onlyIfModified true
-    src 'https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz'
-    dest new File(buildDir, 'libsodium-1.0.16-mingw.tar.gz')
+  onlyIf { !file('lib/libsodium-mingw').exists() }
+  acceptAnyCertificate true
+  quiet false
+  overwrite false
+  onlyIfModified true
+  src 'https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz'
+  dest new File(buildDir, 'libsodium-1.0.16-mingw.tar.gz')
 }
 
 task downloadAndExtractLibsodiumMingw(dependsOn: downloadLibsodiumMingw, type: Copy) {
-    onlyIf { !file('lib/libsodium-mingw').exists() }
-    from tarTree(downloadLibsodiumMingw.dest)
-    into file('lib/libsodium-mingw')
+  onlyIf { !file('lib/libsodium-mingw').exists() }
+  from tarTree(downloadLibsodiumMingw.dest)
+  into file('lib/libsodium-mingw')
 }
 
 cinteropLibsodiumMingw.dependsOn downloadAndExtractLibsodiumMingw
 
 task runProgram {
-    def buildType = 'debug' // Change to 'debug' to run application with debug symbols.
-    dependsOn "link${buildType.capitalize()}ExecutableMingw"
-    doLast {
-        def programFile = kotlin.targets.mingw.compilations.main.getBinary('EXECUTABLE', buildType)
-        exec {
-            executable programFile
-        }
+  def buildType = 'debug' // Change to 'debug' to run application with debug symbols.
+  dependsOn "link${buildType.capitalize()}ExecutableMingw"
+  doLast {
+    def programFile = kotlin.targets.mingw.compilations.main.getBinary('EXECUTABLE', buildType)
+    exec {
+      executable programFile
     }
+  }
 }

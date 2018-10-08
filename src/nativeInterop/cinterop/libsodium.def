@@ -1,4 +1,4 @@
 headers = sodium.h
 package = libsodium
 
-linkerOpts = -llibsodium -lsodium
+linkerOpts = -lsodium
