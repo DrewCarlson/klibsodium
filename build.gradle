@@ -1,0 +1,82 @@
+plugins {
+    id 'kotlin-multiplatform' version '1.3.0-rc-146'
+    id 'de.undercouch.download' version '3.4.3'
+}
+
+repositories {
+    maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+    mavenCentral()
+}
+
+def libDir = file("lib")
+kotlin {
+    targets {
+        fromPreset(presets.mingwX64, 'mingw')
+        configure([mingw]) {
+            compilations.main {
+                outputKinds('EXECUTABLE')
+                entryPoint = 'demo.main'
+                def sodiumDir = file("$libDir/libsodium-mingw/libsodium-win64")
+                extraOpts "-linker-options", "-L$sodiumDir/lib"
+                cinterops {
+                    libsodium {
+                        packageName 'libsodium'
+                        compilerOpts "-I$sodiumDir/include"
+                        includeDirs "-I$sodiumDir/include"/* , "-I$sodiumDir/include/sodium"*/
+                    }
+                }
+            }
+        }
+    }
+    sourceSets {
+        mingwMain {
+        }
+        mingwTest {
+        }
+    }
+}
+
+task downloadLibsodium(type: Download) {
+    onlyIf { !file('lib/libsodium-1.0.16').exists() }
+    acceptAnyCertificate true
+    quiet false
+    overwrite false
+    onlyIfModified true
+    src 'https://download.libsodium.org/libsodium/releases/libsodium-1.0.16.tar.gz'
+    dest new File(buildDir, 'libsodium-1.0.16.tar.gz')
+}
+
+task downloadAndExtractLibsodium(dependsOn: downloadLibsodium, type: Copy) {
+    onlyIf { !file('lib/libsodium-1.0.16').exists() }
+    from tarTree(downloadLibsodium.dest)
+    into file('lib')
+}
+
+task downloadLibsodiumMingw(type: Download) {
+    onlyIf { !file('lib/libsodium-mingw').exists() }
+    acceptAnyCertificate true
+    quiet false
+    overwrite false
+    onlyIfModified true
+    src 'https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz'
+    dest new File(buildDir, 'libsodium-1.0.16-mingw.tar.gz')
+}
+
+task downloadAndExtractLibsodiumMingw(dependsOn: downloadLibsodiumMingw, type: Copy) {
+    onlyIf { !file('lib/libsodium-mingw').exists() }
+    from tarTree(downloadLibsodiumMingw.dest)
+    into file('lib/libsodium-mingw')
+}
+
+cinteropLibsodiumMingw.dependsOn downloadAndExtractLibsodiumMingw
+
+task runProgram {
+    def buildType = 'debug' // Change to 'debug' to run application with debug symbols.
+    dependsOn "link${buildType.capitalize()}ExecutableMingw"
+    doLast {
+        def programFile = kotlin.targets.mingw.compilations.main.getBinary('EXECUTABLE', buildType)
+        exec {
+            executable programFile
+        }
+    }
+}
