@@ -11,9 +11,8 @@ repositories {
 def libDir = file("lib")
 kotlin {
   targets {
-    fromPreset(presets.jvm, 'jvm')
     fromPreset(presets.macosX64, 'macos')
-    fromPreset(presets.mingwX64, 'mingw')
+    /*fromPreset(presets.mingwX64, 'mingw')
     configure([mingw]) {
       compilations.main {
         outputKinds('EXECUTABLE')
@@ -28,7 +27,7 @@ kotlin {
           }
         }
       }
-    }
+    }*/
     configure([macos]) {
       compilations.main {
         outputKinds('EXECUTABLE')
@@ -57,9 +56,8 @@ kotlin {
         implementation 'org.jetbrains.kotlin:kotlin-test-annotations-common'
       }
     }
-    jvmMain {
+    /*jvmMain {
       dependencies {
-        implementation 'com.github.joshjdevl.libsodiumjni:libsodium-jni:2.0.1'
       }
     }
     jvmTest {
@@ -67,7 +65,7 @@ kotlin {
         implementation 'org.jetbrains.kotlin:kotlin-test'
         implementation 'org.jetbrains.kotlin:kotlin-test-junit'
       }
-    }
+    }*/
   }
 }
 
@@ -108,7 +106,7 @@ task runProgramMacos {
   }
 }
 
-/* Native: Windows */
+/* Native: Windows
 
 task downloadLibsodiumMingw(type: Download) {
   onlyIf { !file('lib/libsodium-mingw').exists() }
@@ -138,3 +136,4 @@ task runProgram {
     }
   }
 }
+*/
