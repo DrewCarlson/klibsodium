@@ -137,18 +137,6 @@ expect val crypto_pwhash_MEMLIMIT_INTERACTIVE: kotlin.UInt
 
 expect fun sodium_init(): Boolean
 
-expect fun randombytes_random(): UInt
-
-expect fun randombytes_uniform(upperBound: UInt): UInt
-
-expect fun randombytes_buf(size: ULong): UByteArray
-
-expect fun randombytes_buf_deterministic(size: ULong, seed: UByteArray): UByteArray
-
-expect fun randombytes_close()
-
-expect fun sodium_bin2hex(bin: UByteArray): ByteArray
-
 expect fun crypto_pwhash(password: String, salt: ByteArray, keyLength: Int): UByteArray
 
 expect fun crypto_pwhash_str(password: String? = null): ByteArray
